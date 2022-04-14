@@ -10,6 +10,7 @@ TOKEN = os.getenv('TOKEN')
 PATH_TO_EXCEL = os.getenv('PATH_TO_EXCEL')
 WORKBOOK = openpyxl.load_workbook(PATH_TO_EXCEL)
 SHEET = WORKBOOK['main']
+BUTTONS = ['Получить промокод', 'Получить баланс', 'Потратить']
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -38,7 +39,27 @@ def start_message(message):
         SHEET[f'A{SHEET.max_row + 1}'] = message.chat.id
         SHEET[f'B{SHEET.max_row }'] = message.chat.username
         WORKBOOK.save(PATH_TO_EXCEL)
-    bot.send_message(message.chat.id, 'Hello World')
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for button in BUTTONS:
+        markup.add(telebot.types.KeyboardButton(button))
+    bot.send_message(
+        message.chat.id, 'Доброго времени суток',
+        reply_markup=markup
+    )
+
+
+@bot.message_handler(content_types='text')
+def message_reply(message):
+    if message.text == 'Получить промокод':
+        pass 
+    elif message.text == 'Получить баланс':
+        pass
+    elif message.text == 'Потратить':
+        pass
+    else:
+        bot.send_message(
+            message.chat.id, 'Я вас не понял'
+        )
 
 
 bot.infinity_polling()
