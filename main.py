@@ -51,7 +51,7 @@ def start_message(message):
 @bot.message_handler(content_types='text')
 def message_reply(message):
     if message.text == 'Получить промокод':
-        pass 
+        pass
     elif message.text == 'Получить баланс':
         pass
     elif message.text == 'Потратить':
