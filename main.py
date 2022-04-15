@@ -17,30 +17,47 @@ class ExcelTable:
     def __init__(self):
         self.workbook = openpyxl.load_workbook(PATH_TO_EXCEL)
         self.sheet = self.workbook['main']
-        self.max_row = self.sheet.max_row
 
-    def get_data(self):
+    def get_user_data(self, telegram_id: int) -> list:
+        """
+        Возвращает данные пользователя.
+        :param telegram_id: Уникальный id пользователя
+        :return: Словарь с данными пользователя
+        """
+        row_number = self.get_id().index(telegram_id) + 2
         data = []
-        for row in self.sheet['B2':f'C{self.max_row}']:
-            data_from_fow = []
-            for cell in row:
-                data_from_fow.append(cell.value)
-            data.append(data_from_fow)
-        return data
-
-    def get_id(self):
-        data = []
-        for row in self.sheet['A2':f'A{self.max_row}']:
-            for cell in row:
+        for column in self.sheet[f'B{row_number}':f'E{row_number}']:
+            for cell in column:
                 data.append(cell.value)
         return data
 
-    def write_new_user(self, telegram_id, username):
-        self.sheet[f'A{self.max_row} + 1'] = telegram_id
-        self.sheet[f'B{self.max_row}'] = username
+    def get_id(self) -> list:
+        """
+        Возвращает список id всех пользователей.
+        :return: Список id всех пользователей
+        """
+        data = []
+        for row in self.sheet['A2':'A1000']:
+            for cell in row:
+                if cell.value is not None:
+                    data.append(cell.value)
+        return data
+
+    def write_new_user(self, telegram_id: int, username: str):
+        """
+        Записывает данные нового пользователя в таблицу.
+        :param telegram_id: ID Пользователя
+        :param username: Никнейм пользователя
+        """
+        line_number = len(self.get_id()) + 2
+        self.sheet[f'A{line_number}'] = telegram_id
+        self.sheet[f'B{line_number}'] = username
         self.workbook.save(PATH_TO_EXCEL)
 
     def reload_table(self):
+        """
+        Перезагружает таблицу, для обновления данных.
+        """
         self.__init__()
 
 
@@ -62,6 +79,7 @@ def start_message(message):
 @bot.message_handler(commands=['reload'])
 def reload_table_from_message(message):
     if str(message.chat.id) in ADMINS:
+        table.reload_table()
         bot.send_message(
             message.chat.id, 'Таблица перезагружена'
         )
@@ -69,12 +87,28 @@ def reload_table_from_message(message):
 
 @bot.message_handler(content_types='text')
 def message_reply(message):
-    if message.text == 'Получить промокод':
-        print(table.get_data())
-    elif message.text == 'Получить баланс':
-        pass
-    elif message.text == 'Потратить':
-        pass
+    user_id = message.chat.id
+    have_user_data = False
+    data = [None for i in range(4)]
+    if user_id in table.get_id():
+        data = table.get_user_data(user_id)
+        have_user_data = True
+    if message.text == 'Получить промокод' and have_user_data:
+        bot.send_message(
+            message.chat.id,
+            f'Ваш промокод:\n {data[1]}'
+        )
+    elif message.text == 'Получить баланс' and have_user_data:
+        usage = 'Обновляем данные покупок раз в неделю.Если есть вопросы, ' \
+                'можете обратиться в службу поддержки'
+        if data[2] is not None:
+            usage = data[2]
+        bot.send_message(
+            user_id,
+            f'Ваш баланс: \n{usage}'
+        )
+    elif message.text == 'Потратить' and have_user_data:
+        pass 
     else:
         bot.send_message(
             message.chat.id, 'Я вас не понял'
