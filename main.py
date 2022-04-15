@@ -118,8 +118,8 @@ def message_reply(message):
             f'Ваш промокод:\n {data[1]}'
         )
     elif message.text == 'Получить баланс' and have_user_data:
-        usage = 'Обновляем данные покупок раз в неделю.Если есть вопросы, ' \
-                'можете обратиться в службу поддержки'
+        usage = ('Обновляем данные покупок раз в неделю.Если есть вопросы, '
+                 'можете обратиться в службу поддержки')
         if data[2] != 0 and data[2] is not None:
             usage = data[2]
         bot.send_message(
@@ -127,8 +127,9 @@ def message_reply(message):
             f'Ваш баланс: \n{usage}'
         )
     elif message.text == 'Потратить' and have_user_data:
-        result_promocode = 'Обновляем данные покупок раз в месяц.Если есть вопросы, ' \
-                           'можете обратиться в службу поддержки'
+        result_promocode = ('Обновляем данные покупок раз в месяц.'
+                            'Если есть вопросы, '
+                            'можете обратиться в службу поддержки')
         if data[3] != 0 and data[3] is not None:
             result_promocode = data[3]
         bot.send_message(
