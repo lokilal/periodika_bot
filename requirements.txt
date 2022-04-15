@@ -6,3 +6,4 @@ requests==2.27.1
 urllib3==1.26.9
 python-dotenv==0.20.0
 openpyxl==3.0.9
+pygsheets~=2.0.5

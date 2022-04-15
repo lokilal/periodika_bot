@@ -1,13 +1,13 @@
 import os
 
-import openpyxl
+import pygsheets
 import telebot
 from dotenv import load_dotenv
 
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
-PATH_TO_EXCEL = os.getenv('PATH_TO_EXCEL')
+SPREADSHEETS_ID = os.getenv('SPREADSHEETS_ID')
 ADMINS = os.getenv('ADMINS').split(',')
 BUTTONS = ['Получить промокод', 'Получить баланс', 'Потратить']
 bot = telebot.TeleBot(TOKEN)
@@ -15,8 +15,11 @@ bot = telebot.TeleBot(TOKEN)
 
 class ExcelTable:
     def __init__(self):
-        self.workbook = openpyxl.load_workbook(PATH_TO_EXCEL)
-        self.sheet = self.workbook['main']
+        self.table = pygsheets.authorize(
+            service_file='secret_key.json'
+        )
+        self.workbook = self.table.open_by_key(SPREADSHEETS_ID)
+        self.sheet = self.workbook.sheet1
 
     def get_user_data(self, telegram_id: int) -> list:
         """
@@ -26,7 +29,7 @@ class ExcelTable:
         """
         row_number = self.get_id().index(telegram_id) + 2
         data = []
-        for column in self.sheet[f'B{row_number}':f'E{row_number}']:
+        for column in self.sheet.range(f'B{row_number}:E{row_number}'):
             for cell in column:
                 data.append(cell.value)
         return data
@@ -37,10 +40,10 @@ class ExcelTable:
         :return: Список id всех пользователей
         """
         data = []
-        for row in self.sheet['A2':'A1000']:
+        for row in self.sheet.range('A2:A1000'):
             for cell in row:
-                if cell.value is not None:
-                    data.append(cell.value)
+                if len(cell.value) != 0:
+                    data.append(int(cell.value))
         return data
 
     def write_new_user(self, telegram_id: int, username: str):
@@ -50,9 +53,8 @@ class ExcelTable:
         :param username: Никнейм пользователя
         """
         line_number = len(self.get_id()) + 2
-        self.sheet[f'A{line_number}'] = telegram_id
-        self.sheet[f'B{line_number}'] = username
-        self.workbook.save(PATH_TO_EXCEL)
+        self.sheet.update_value(f'A{line_number}', telegram_id)
+        self.sheet.update_value(f'B{line_number}', username)
 
     def delete_usage_and_result_promocode(self, telegram_id: int):
         """
@@ -60,9 +62,8 @@ class ExcelTable:
         :param telegram_id: Уникальный ID пользователя
         """
         row_number = self.get_id().index(telegram_id) + 2
-        self.sheet[f'D{row_number}'] = 0
-        self.sheet[f'E{row_number}'] = 0
-        self.workbook.save(PATH_TO_EXCEL)
+        self.sheet.update_value(f'D{row_number}', 0)
+        self.sheet.update_value(f'E{row_number}', 0)
 
     def reload_table(self):
         """
@@ -70,10 +71,9 @@ class ExcelTable:
         Отправляет уведомление пользователю о том, что он может использовать
         промокод.
         """
-        self.__init__()
         for user_id in self.get_id():
             user_data = self.get_user_data(user_id)
-            if user_data[3] is not None and user_data[3] != 0:
+            if len(user_data[3]) != 0:
                 bot.send_message(
                     user_id,
                     'Вы можете потратить свой баланс используя промокод'
