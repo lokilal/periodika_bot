@@ -73,7 +73,7 @@ class ExcelTable:
         """
         for user_id in self.get_id():
             user_data = self.get_user_data(user_id)
-            if len(user_data[3]) != 0:
+            if len(user_data[3]) != 0 and user_data[3] != '0':
                 bot.send_message(
                     user_id,
                     'Вы можете потратить свой баланс используя промокод'
@@ -115,26 +115,27 @@ def message_reply(message):
     if message.text == 'Получить промокод' and have_user_data:
         bot.send_message(
             message.chat.id,
-            f'Ваш промокод:\n {data[1]}'
+            f'Промокод, которым вы можете поделиться с друзьями:\n {data[1]}'
         )
     elif message.text == 'Получить баланс' and have_user_data:
         usage = ('Обновляем данные покупок раз в неделю.Если есть вопросы, '
                  'можете обратиться в службу поддержки')
-        if data[2] != 0 and data[2] is not None:
+        if int(data[2]) != 0:
             usage = data[2]
         bot.send_message(
             user_id,
-            f'Ваш баланс: \n{usage}'
+            f'Количество баллов, которое вы можете потратить: \n{usage}'
         )
     elif message.text == 'Потратить' and have_user_data:
         result_promocode = ('Обновляем данные покупок раз в месяц.'
                             'Если есть вопросы, '
                             'можете обратиться в службу поддержки')
-        if data[3] != 0 and data[3] is not None:
+        if data[3] != '0':
             result_promocode = data[3]
         bot.send_message(
             user_id,
-            f'Промокод: \n{result_promocode}'
+            f'Промокод, с помощью которого вы можете потратить '
+            f'накопленные баллы: \n{result_promocode}'
         )
         table.delete_usage_and_result_promocode(user_id)
     else:
