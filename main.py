@@ -54,11 +54,30 @@ class ExcelTable:
         self.sheet[f'B{line_number}'] = username
         self.workbook.save(PATH_TO_EXCEL)
 
+    def delete_usage_and_result_promocode(self, telegram_id: int):
+        """
+        Удаляет данные из колонок usage, result_promocode.
+        :param telegram_id: Уникальный ID пользователя
+        """
+        row_number = self.get_id().index(telegram_id) + 2
+        self.sheet[f'D{row_number}'] = 0
+        self.sheet[f'E{row_number}'] = 0
+        self.workbook.save(PATH_TO_EXCEL)
+
     def reload_table(self):
         """
         Перезагружает таблицу, для обновления данных.
+        Отправляет уведомление пользователю о том, что он может использовать
+        промокод.
         """
         self.__init__()
+        for user_id in self.get_id():
+            user_data = self.get_user_data(user_id)
+            if user_data[3] is not None and user_data[3] != 0:
+                bot.send_message(
+                    user_id,
+                    'Вы можете потратить свой баланс используя промокод'
+                )
 
 
 @bot.message_handler(commands=['start'])
@@ -101,14 +120,22 @@ def message_reply(message):
     elif message.text == 'Получить баланс' and have_user_data:
         usage = 'Обновляем данные покупок раз в неделю.Если есть вопросы, ' \
                 'можете обратиться в службу поддержки'
-        if data[2] is not None:
+        if data[2] != 0 and data[2] is not None:
             usage = data[2]
         bot.send_message(
             user_id,
             f'Ваш баланс: \n{usage}'
         )
     elif message.text == 'Потратить' and have_user_data:
-        pass 
+        result_promocode = 'Обновляем данные покупок раз в месяц.Если есть вопросы, ' \
+                           'можете обратиться в службу поддержки'
+        if data[3] != 0 and data[3] is not None:
+            result_promocode = data[3]
+        bot.send_message(
+            user_id,
+            f'Промокод: \n{result_promocode}'
+        )
+        table.delete_usage_and_result_promocode(user_id)
     else:
         bot.send_message(
             message.chat.id, 'Я вас не понял'
