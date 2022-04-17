@@ -8,7 +8,7 @@ load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 SPREADSHEETS_ID = os.getenv('SPREADSHEETS_ID')
-ADMINS = os.getenv('ADMINS').split(',')
+ADMINS = os.getenv('ADMINS', default='').split(',')
 BUTTONS = ['Получить промокод', 'Получить баланс', 'Потратить']
 bot = telebot.TeleBot(TOKEN)
 
